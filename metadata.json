@@ -1,0 +1,24 @@
+{
+  "name": "silverstripe-ss_logstash",
+  "version": "1.0.0",
+  "author": "SilverStripe Ltd",
+  "summary": "Base library for creatng metrics",
+  "license": "BSD-3-Clause",
+  "source": "https://github.com/silverstripeltd/puppet-ss_logstash",
+  "project_page": "https://github.com/silverstripeltd/puppet-ss_logstash",
+  "issues_url": "https://github.com/silverstripeltd/puppet-ss_logstash/issues",
+  "dependencies": [
+  ],
+  "data_provider": null,
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "8"
+      ]
+    }
+  ],
+  "tags": [
+    "metrics"
+  ]
+}
