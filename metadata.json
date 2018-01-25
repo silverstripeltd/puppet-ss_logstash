@@ -2,7 +2,7 @@
   "name": "silverstripe-ss_logstash",
   "version": "1.0.0",
   "author": "SilverStripe Ltd",
-  "summary": "Base library for creatng metrics",
+  "summary": "Installs logstash for use on AWS Graylog setup, uses TCP rather than UDP",
   "license": "BSD-3-Clause",
   "source": "https://github.com/silverstripeltd/puppet-ss_logstash",
   "project_page": "https://github.com/silverstripeltd/puppet-ss_logstash",
