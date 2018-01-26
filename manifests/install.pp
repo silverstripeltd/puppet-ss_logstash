@@ -20,7 +20,6 @@ class ss_logstash::install inherits ss_logstash {
             'deb' => true,
         },
     }->
-
     package {
         'logstash':
             ensure => 'installed',
@@ -28,6 +27,19 @@ class ss_logstash::install inherits ss_logstash {
                 Class['apt::update'],
                 Class['java'],
             ],
+    }->
+    service { 'logstash':
+        enable => true,
+        ensure => running,
+    }->
+    exec { 'install_lumberjack':
+        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',
+    }->
+    exec { 'install_gelf_input':
+        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-gelf',
+    }->
+    exec { 'install_gelf_output':
+        command => '/usr/share/logstash/bin/logstash-plugin install logstash-output-gelf',
     }
 
     file { "001-lumberjack.conf":
@@ -37,6 +49,7 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/001-lumberjack.erb"),
+        require => File['/etc/logstash/conf.d'],
     }
 
     file { "010-syslog.conf":
@@ -46,6 +59,7 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/010-syslog.erb"),
+        require => File['/etc/logstash/conf.d'],
     }
 
     file { "020-gelf.conf":
@@ -55,5 +69,6 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/020-gelf.erb"),
+        require => File['/etc/logstash/conf.d'],
     }
 }
