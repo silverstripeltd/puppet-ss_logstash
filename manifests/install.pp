@@ -70,4 +70,14 @@ class ss_logstash::install inherits ss_logstash {
         content => template("ss_logstash/020-gelf.erb"),
         require => File['/etc/logstash/conf.d'],
     }
+
+    file { "startup.options":
+        ensure => present,
+        path => "/etc/logstash/startup.options",
+        owner => "root",
+        group => "root",
+        mode => "0755",
+        content => template("ss_logstash/startup_options.erb"),
+        require => Service['logstash'],
+    }
 }
