@@ -24,8 +24,10 @@ class ss_logstash::install inherits ss_logstash {
     package {
         'logstash':
             ensure => 'installed',
-            require => Class['apt::update'],
-            require => Class['java'],
+            require => [
+                Class['apt::update'],
+                Class['java'],
+            ],
     }
 
     file { "001-lumberjack.conf":
