@@ -1,7 +1,7 @@
 output {
 	gelf {
 		host => '<%= @graylog_server %>'
-		port => '12201'
+		port => '<%= @port %>'
 		workers => 8
 		protocol => 'TCP'
 	}
