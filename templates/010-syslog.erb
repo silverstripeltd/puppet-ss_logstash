@@ -1,84 +1,41 @@
 filter {
 
+	# try to parse the log entry as a syslog formatted entry
 	grok {
-		# this will match a typical syslog message, limited to 4096b for the 'payload'
-		match => { 'message' => '(%{SYSLOGTIMESTAMP:syslog_timestamp}|%{TIMESTAMP_ISO8601:syslog_timestamp}) %{SYSLOGHOST:log_host} %{DATA:log_type}(?:\#%{DATA:virtual_id})?(?:\[%{POSINT:syslog_pid}\])?:? (?<log_message>.{,4096})' }
+		# don't make new fields for unnamed captures
+		named_captures_only => true
+		overwrite => [ "host" ]
+		match => { 'message' => '(%{SYSLOGTIMESTAMP:syslog_timestamp}|%{TIMESTAMP_ISO8601:syslog_timestamp}) %{SYSLOGHOST:host} %{DATA:log_type}(?:\#%{DATA:virtual_id})?(?:\[%{POSINT}\])?:? (?<short_message>.{,4096})' }
 	}
 
-	if ![log_message] {
+	# CRON is just noise and auth sends it's own logs with the sshd/su etc in log_type
+	if [log_type] in ["CRON", "auth"] {
 		drop { }
 	}
 
-	if [log_type] == "CRON" {
-		drop { }
+	date {
+		match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss", "ISO8601" ]
 	}
 
-	if [log_message] {
-
-		if [log_host] {
-			mutate {
-				replace => { "host" => "%{log_host}" }
-			}
+	if [log_type] in ["nginx", "apache"] {
+		grok {
+			# don't make new fields for unnamed captures
+			named_captures_only => true
+			# if first entry is matched, don't try the match
+			break_on_match => true
+			# without http_resp_usec - normally nginx
+			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}"' }
+			# with http_resp_usec  - normally nginx
+			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}" (?:%{NUMBER:http_resp_usec:int})' }
 		}
-
-		if [log_message] {
-			mutate {
-				replace => { "message" => "%{log_message}" }
-			}
-		}
-
-		syslog_pri {}
-
-		date {
-			match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss", "ISO8601" ]
-			target => "@timestamp"
-		}
-
-		if [log_type] == "apache" {
-			grok {
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) %{QS:http_referrer_qs} %{QS:http_agent_qs} %{NUMBER:http_resp_usec:int}' }
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) %{QS:http_referrer_qs} %{QS:http_agent_qs}' }
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-)' }
-				# 122.56.196.40, 198.143.48.33 - - [21/May/2015:10:24:31 +1200] GET /help/out-of-credit-or-data HTTP/1.1 200 4463 - iPhone3,2/7.1.2 (11D257) 1600
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] (?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest}) %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-)' }
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] (?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest}) %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) (${GREEDYDATA:http_tail})?' }
-			}
-		}
-
-		if [log_type] == "nginx" {
-			grok {
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) %{QS:http_referrer_qs} %{QS:http_agent_qs} %{NUMBER:http_resp_usec:int}' }
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) %{QS:http_referrer_qs} %{QS:http_agent_qs}' }
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-)' }
-				# 122.56.196.40, 198.143.48.33 - - [21/May/2015:10:24:31 +1200] GET /help/out-of-credit-or-data HTTP/1.1 200 4463 - iPhone3,2/7.1.2 (11D257) 1600
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] (?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest}) %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-)' }
-				match => { 'log_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:timestamp}\] (?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest}) %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) (${GREEDYDATA:http_tail})?' }
-			}
-		}
-
-		if [http_agent_qs] {
-			grok {
-	  			match => { 'http_agent_qs' => '"%{GREEDYDATA:http_agent}"' }
-	  		}
-			mutate { remove_field => [ "http_agent_qs" ] }
-		}
-
-		if [http_referrer_qs] {
-			grok {
-	  			match => { 'http_referrer_qs' => '"%{GREEDYDATA:http_referrer}"' }
-	  		}
-			mutate { remove_field => [ "http_referrer_qs" ] }
-		}
-
 		if [http_url] {
 			mutate {
-				replace => { 'message' => '%{http_verb} %{http_url}' }
-				add_field =>  { 'full_log' => '%{log_message}' }
+				replace => { 'short_message' => '%{http_verb} %{http_url}' }
 			}
 		}
+	}
 
-		mutate {
-			remove_field => [ "log_message", "log_host", "syslog_facility", "syslog_facility_code", "syslog_severity_code", "syslog_timestamp", "syslog_pid", "syslog_severity", "type", "level", "offset", "file", "facility" ]
-		}
+	mutate {
+		remove_field => [ "syslog_timestamp", "file", "protocol", "level", "offset", "file", "facility"]
 	}
 }
