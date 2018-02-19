@@ -29,9 +29,9 @@ filter {
 			# if first entry is matched, don't try matching others
 			break_on_match => true
 			# web access logs with http_resp_usec  - apache logs often includes this
-			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}" (?:%{NUMBER:http_resp_usec:int})' }
+			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{NOTSPACE:http_ident} %{NOTSPACE:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}" (?:%{NUMBER:http_resp_usec:int})' }
 			# web access logs without http_resp_usec - nginx logs doesn't include this
-			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}"' }
+			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{NOTSPACE:http_ident} %{NOTSPACE:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}"' }
 			# apache "error" logs
 			match => {"short_message" => '\[%{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}\] \[(?:%{NOTSPACE}){0,1}\:%{LOGLEVEL:http_log_level}\] \[pid %{NUMBER}\] (?:\[client %{IPORHOST:http_clientip}:%{POSINT}\] ){0,1}%{GREEDYDATA:error_message}'}
 		}
