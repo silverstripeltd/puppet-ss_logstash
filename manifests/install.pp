@@ -22,10 +22,7 @@ class ss_logstash::install inherits ss_logstash {
     }->
     package { 'logstash':
         ensure => 'installed',
-        require => [
-            Class['apt::update'],
-            Class['java'],
-        ],
+        require => Class['apt::update'],
     }->
     service { 'logstash':
         enable => true,
