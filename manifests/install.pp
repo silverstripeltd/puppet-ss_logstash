@@ -13,7 +13,7 @@ class ss_logstash::install inherits ss_logstash {
         repos    => 'main',
         key      => {
             'id'     => '46095ACC8548582C1A2699A9D27D666CD88E42B4',
-            'server' => 'hkps://keyserver.ubuntu.com',
+            'server' => 'keyserver.ubuntu.com',
         },
         include  => {
             'src' => false,
