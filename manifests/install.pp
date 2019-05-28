@@ -29,7 +29,12 @@ class ss_logstash::install inherits ss_logstash {
         ensure => running,
     }->
     exec { 'install_lumberjack':
-        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',
+        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',,
+        onlyif => $install_lumberjack,
+    }->
+    exec { 'install_beats':
+        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-beats',
+        onlyif => $install_beats,
     }->
     exec { 'install_gelf_input':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-gelf',
@@ -45,6 +50,16 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/001-lumberjack.erb"),
+        require => File['/etc/logstash/conf.d'],
+    }
+
+    file { "002-beats.conf":
+        ensure => present,
+        path => "/etc/logstash/conf.d/002-beats.conf",
+        owner => "root",
+        group => "root",
+        mode => "0755",
+        content => template("ss_logstash/002-beats.erb"),
         require => File['/etc/logstash/conf.d'],
     }
 
