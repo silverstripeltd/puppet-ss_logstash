@@ -8,7 +8,7 @@ class ss_logstash::install inherits ss_logstash {
     }->
     apt::source { 'logstash':
         comment  => 'This is the logstash Debian stable mirror',
-        location => 'https://artifacts.elastic.co/packages/6.x/apt',
+        location => 'https://artifacts.elastic.co/packages/7.x/apt',
         release  => 'stable',
         repos    => 'main',
         key      => {
