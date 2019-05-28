@@ -29,12 +29,10 @@ class ss_logstash::install inherits ss_logstash {
         ensure => running,
     }->
     exec { 'install_lumberjack':
-        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',,
-        onlyif => $install_lumberjack,
+        command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',
     }->
     exec { 'install_beats':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-beats',
-        onlyif => $install_beats,
     }->
     exec { 'install_gelf_input':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-gelf',
