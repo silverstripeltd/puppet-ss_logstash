@@ -90,4 +90,14 @@ class ss_logstash::install inherits ss_logstash {
         content => template("ss_logstash/startup_options.erb"),
         require => Service['logstash'],
     }
+
+    file { "jvm.options":
+        ensure => present,
+        path => "/etc/logstash/jvm.options",
+        owner => "root",
+        group => "root",
+        mode => "0644",
+        content => template("ss_logstash/jvm_options.erb"),
+        require => Service['logstash'],
+    }
 }
