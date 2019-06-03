@@ -30,15 +30,19 @@ class ss_logstash::install inherits ss_logstash {
     }->
     exec { 'install_lumberjack':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',
+        timeout => 1800,
     }->
     exec { 'install_beats':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-beats',
+        timeout => 1800,
     }->
     exec { 'install_gelf_input':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-gelf',
+        timeout => 1800,
     }->
     exec { 'install_gelf_output':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-output-gelf',
+        timeout => 1800,
     }
 
     file { "001-lumberjack.conf":
