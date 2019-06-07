@@ -1,74 +1,78 @@
 filter {
 
-	# try to parse the log entry as a syslog formatted entry
-	grok {
-		# don't make new fields for unnamed captures
-		named_captures_only => true
-		overwrite => [ "host" ]
-		match => { 'message' => '(%{SYSLOGTIMESTAMP:syslog_timestamp}|%{TIMESTAMP_ISO8601:syslog_timestamp}) %{SYSLOGHOST:host} %{DATA:log_type}(?:\#%{DATA:virtual_id})?(?:\[%{POSINT}\])?:? (?<short_message>.{,4096})' }
-	}
+    # try to parse the log entry as a syslog formatted entry
+    grok {
+        # don't make new fields for unnamed captures
+        named_captures_only => true
+        overwrite => [ "host" ]
+        match => { 'message' => '(%{SYSLOGTIMESTAMP:syslog_timestamp}|%{TIMESTAMP_ISO8601:syslog_timestamp}) %{SYSLOGHOST:host} %{DATA:log_type}(?:\#%{DATA:virtual_id})?(?:\[%{POSINT}\])?:? (?<short_message>.{,4096})' }
+    }
 
-	# CRON is just noise and auth sends it's own logs with the sshd/su etc in log_type
-	if [log_type] in ["CRON", "auth"] {
-		drop { }
-	}
+    # CRON is just noise and auth sends it's own logs with the sshd/su etc in log_type
+    if [log_type] in ["CRON", "auth"] {
+        drop { }
+    }
 
-	if [short_message] =~ "^proxy$" {
-		drop{ }
-	}
+    if [short_message] =~ "^proxy$" {
+        drop{ }
+    }
 
-	date {
-		match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss", "ISO8601" ]
-	}
+    date {
+        match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss", "ISO8601" ]
+    }
 
-	# sometimes the SilverStripe_log ends up in the apache output, reparse
-	if [short_message] =~ "^SilverStripe_log" {
-		grok {
-			# don't make new fields for unnamed captures
-			named_captures_only => true
-			match => { 'short_message' => '%{NOTSPACE}\[%{NOTSPACE}\]\:\ \[%{NOTSPACE} %{NOTSPACE}\] %{GREEDYDATA:debug_message}'}
-		}
-		mutate {
-			replace => { 'log_type' => 'SilverStripe_log' }
-			replace => { 'short_message' => '%{debug_message}' }
-			remove_field => [ "debug_message" ]
-		}
-	}
+    # sometimes the SilverStripe_log ends up in the apache output, reparse
+    if [short_message] =~ "^SilverStripe_log" {
+        grok {
+            # don't make new fields for unnamed captures
+            named_captures_only => true
+            match => { 'short_message' => '%{NOTSPACE}\[%{NOTSPACE}\]\:\ \[%{NOTSPACE} %{NOTSPACE}\] %{GREEDYDATA:debug_message}'}
+        }
+        mutate {
+            replace => { 'log_type' => 'SilverStripe_log' }
+            replace => { 'short_message' => '%{debug_message}' }
+            remove_field => [ "debug_message" ]
+        }
+    }
 
-	if [log_type] in ["nginx", "apache"] {
-		grok {
-			# don't make new fields for unnamed captures
-			named_captures_only => true
-			# if first entry is matched, don't try matching others
-			break_on_match => true
-			# web access logs with http_resp_usec  - apache logs often includes this
-			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{NOTSPACE:http_ident} %{NOTSPACE:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}" (?:%{NUMBER:http_resp_usec:int})' }
-			# web access logs without http_resp_usec - nginx logs doesn't include this
-			match => { 'short_message' => '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{NOTSPACE:http_ident} %{NOTSPACE:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}"' }
-			# apache "error" logs
-			match => {"short_message" => '\[%{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}\] \[(?:%{NOTSPACE}){0,1}\:%{LOGLEVEL:http_log_level}\] \[pid %{NUMBER}\] (?:\[client %{IPORHOST:http_clientip}:%{POSINT}\] ){0,1}%{GREEDYDATA:error_message}'}
-		}
+    if [log_type] in ["nginx", "apache"] {
+        grok {
+            # don't make new fields for unnamed captures
+            named_captures_only => true
+            # if first entry is matched, don't try matching others
+            break_on_match => true
+            match => {
+                'short_message' => [
+                    # web access logs with http_resp_usec  - apache logs often includes this
+                    '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{NOTSPACE:http_ident} %{NOTSPACE:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}" (?:%{NUMBER:http_resp_usec:int})',
+                    # web access logs without http_resp_usec - nginx logs doesn't include this
+                    '(?:%{IPORHOST:http_clientip}|-)(?:\,\s%{NOTSPACE:http_proxyip})* %{NOTSPACE:http_ident} %{NOTSPACE:http_auth} \[%{HTTPDATE}\] "(?:%{WORD:http_verb} %{NOTSPACE:http_url}(?: HTTP/%{NUMBER:http_httpversion})?|%{DATA:http_rawrequest})" %{NUMBER:http_response:int} (?:%{NUMBER:http_bytes:int}|-) "%{DATA:http_referrer}" "%{DATA:http_agent}"',
+                    # apache "error" logs
+                    '\[%{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}\] \[(?:%{NOTSPACE}){0,1}\:%{LOGLEVEL:http_log_level}\] \[pid %{NUMBER}\] (?:\[client %{IPORHOST:http_clientip}:%{POSINT}\] ){0,1}%{GREEDYDATA:error_message}'
+                ]
+            }
+        }
 
-		if [http_resp_usec] {
-			ruby {
-				code => "event.set('http_resp_sec', event.get('http_resp_usec').to_f / 1000000)"
-			}
-		}
+        if [http_resp_usec] {
+            ruby {
+                code => "event.set('http_resp_sec', event.get('http_resp_usec').to_f / 1000000)"
+            }
+        }
 
-		if [http_url] {
-			mutate {
-				replace => { 'short_message' => '%{http_verb} %{http_url}' }
-			}
-		}
-		if [error_message] {
-			mutate {
-				replace => { 'short_message' => '%{error_message}' }
-				remove_field => [ "error_message" ]
-			}
-		}
-	}
+        if [http_url] {
+            mutate {
+                replace => { 'short_message' => '%{http_verb} %{http_url}' }
+            }
+        }
+        if [error_message] {
+            mutate {
+                replace => { 'short_message' => '%{error_message}' }
+                remove_field => [ "error_message" ]
+            }
+        }
+    }
 
-	mutate {
-		remove_field => [ "syslog_timestamp", "file", "protocol", "level", "offset", "file", "facility"]
-	}
+    mutate {
+        remove_field => [ "syslog_timestamp", "file", "protocol", "level", "offset", "file", "facility"]
+    }
 }
