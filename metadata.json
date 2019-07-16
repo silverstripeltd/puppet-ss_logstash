@@ -16,6 +16,12 @@
       "operatingsystemrelease": [
         "8"
       ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "18.04"
+      ]
     }
   ],
   "tags": [
