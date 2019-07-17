@@ -27,22 +27,30 @@ class ss_logstash::install inherits ss_logstash {
     service { 'logstash':
         enable => true,
         ensure => running,
-    }->
+    }
+
     exec { 'install_lumberjack':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',
         timeout => 1800,
-    }->
+        require => Package['logstash']
+    }
+
     exec { 'install_beats':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-beats',
         timeout => 1800,
-    }->
+        require => Package['logstash']
+    }
+
     exec { 'install_gelf_input':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-gelf',
         timeout => 1800,
-    }->
+        require => Package['logstash']
+    }
+
     exec { 'install_gelf_output':
         command => '/usr/share/logstash/bin/logstash-plugin install logstash-output-gelf',
         timeout => 1800,
+        require => Package['logstash']
     }
 
     file { "001-lumberjack.conf":
@@ -52,7 +60,8 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/001-lumberjack.erb"),
-        require => File['/etc/logstash/conf.d'],
+        require => File['/etc/logstash/conf.d/'],
+        notify => Service['logstash'],
     }
 
     file { "002-beats.conf":
@@ -62,7 +71,8 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/002-beats.erb"),
-        require => File['/etc/logstash/conf.d'],
+        require => File['/etc/logstash/conf.d/'],
+        notify => Service['logstash'],
     }
 
     file { "010-syslog.conf":
@@ -72,7 +82,8 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/010-syslog.erb"),
-        require => File['/etc/logstash/conf.d'],
+        require => File['/etc/logstash/conf.d/'],
+        notify => Service['logstash'],
     }
 
     file { "020-gelf.conf":
@@ -82,7 +93,8 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/020-gelf.erb"),
-        require => File['/etc/logstash/conf.d'],
+        require => File['/etc/logstash/conf.d/'],
+        notify => Service['logstash'],
     }
 
     file { "startup.options":
@@ -92,7 +104,8 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0755",
         content => template("ss_logstash/startup_options.erb"),
-        require => Service['logstash'],
+        require => File['/etc/logstash/'],
+        notify => Service['logstash'],
     }
 
     file { "jvm.options":
@@ -102,6 +115,7 @@ class ss_logstash::install inherits ss_logstash {
         group => "root",
         mode => "0644",
         content => template("ss_logstash/jvm_options.erb"),
-        require => Service['logstash'],
+        require => File['/etc/logstash/'],
+        notify => Service['logstash'],
     }
 }
