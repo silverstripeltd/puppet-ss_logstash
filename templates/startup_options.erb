@@ -18,7 +18,8 @@ LS_HOME=/usr/share/logstash
 LS_SETTINGS_DIR=/etc/logstash
 
 # Arguments to pass to logstash
-LS_OPTS="<%= @ls_opts %>"
+# Arguments to pass to logstash
+LS_OPTS="--path.settings ${LS_SETTINGS_DIR} <%= @ls_opts %>"
 
 # Arguments to pass to java
 LS_JAVA_OPTS=""
