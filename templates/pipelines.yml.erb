@@ -1,0 +1,8 @@
+#- pipeline.id: main
+#  path.config: "/etc/logstash/conf.d/*.conf"
+
+- pipeline.id: inputs
+  path.config: "/etc/logstash/conf.d/inputs.conf"
+
+- pipeline.id: graylog
+  path.config: "/etc/logstash/conf.d/graylog.conf"

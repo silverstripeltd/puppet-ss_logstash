@@ -1,3 +1,7 @@
+input {
+	pipeline { address => graylog }
+}
+
 filter {
 
     # try to parse the log entry as a syslog formatted entry
@@ -75,4 +79,12 @@ filter {
     mutate {
         remove_field => [ "syslog_timestamp", "file", "protocol", "level", "offset", "file", "facility"]
     }
+}
+
+output {
+  gelf {
+	  host => '<%= @graylog_server %>'
+	  port => '<%= @port %>'
+	  protocol => 'TCP'
+  }
 }

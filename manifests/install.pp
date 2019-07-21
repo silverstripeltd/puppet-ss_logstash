@@ -86,49 +86,39 @@ class ss_logstash::install inherits ss_logstash {
         unless => "/bin/grep 'logstash-output-gelf' /usr/share/logstash/Gemfile",
     }
 
-    file { "001-lumberjack.conf":
-        ensure => present,
-        path => "/etc/logstash/conf.d/001-lumberjack.conf",
-        owner => "root",
-        group => "root",
-        mode => "0644",
-        content => template("ss_logstash/001-lumberjack.erb"),
-        require => File['/etc/logstash/conf.d/'],
-        notify => Service['logstash'],
-    }
+    # pipeline config starts here
 
-    file { "002-beats.conf":
-        ensure => present,
-        path => "/etc/logstash/conf.d/002-beats.conf",
-        owner => "root",
-        group => "root",
-        mode => "0644",
-        content => template("ss_logstash/002-beats.erb"),
-        require => File['/etc/logstash/conf.d/'],
-        notify => Service['logstash'],
-    }
+  file { "/etc/logstash/pipelines.yml":
+    ensure => present,
+    owner => "root",
+    group => "root",
+    mode => "0644",
+    content => template("ss_logstash/pipelines.yml.erb"),
+    require => File['/etc/logstash/'],
+    notify => Service['logstash'],
+  }
 
-    file { "010-syslog.conf":
-        ensure => present,
-        path => "/etc/logstash/conf.d/010-syslog.conf",
-        owner => "root",
-        group => "root",
-        mode => "0644",
-        content => template("ss_logstash/010-syslog.erb"),
-        require => File['/etc/logstash/conf.d/'],
-        notify => Service['logstash'],
-    }
+  # input pipeline
+  file { "/etc/logstash/conf.d/inputs.conf":
+    ensure => present,
+    owner => "root",
+    group => "root",
+    mode => "0644",
+    content => template("ss_logstash/inputs.erb"),
+    require => File['/etc/logstash/conf.d/'],
+    notify => Service['logstash'],
+  }
 
-    file { "020-gelf.conf":
-        ensure => present,
-        path => "/etc/logstash/conf.d/020-gelf.conf",
-        owner => "root",
-        group => "root",
-        mode => "0644",
-        content => template("ss_logstash/020-gelf.erb"),
-        require => File['/etc/logstash/conf.d/'],
-        notify => Service['logstash'],
-    }
+  file { "/etc/logstash/conf.d/graylog.conf":
+    ensure => present,
+    owner => "root",
+    group => "root",
+    mode => "0644",
+    content => template("ss_logstash/graylog.erb"),
+    require => File['/etc/logstash/conf.d/'],
+    notify => Service['logstash'],
+  }
 
+  # S3 pipeline output
 
 }
