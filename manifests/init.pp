@@ -6,6 +6,8 @@ class ss_logstash (
   $port             = 12201,
   $s3_bucket_region = undef,
   $s3_bucket_name   = undef,
+  $s3_time_file     = 60,
+  $s3_size_file     = 0,
 ) {
   class { 'ss_logstash::install': }
 }
