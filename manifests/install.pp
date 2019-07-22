@@ -109,6 +109,7 @@ class ss_logstash::install inherits ss_logstash {
     notify => Service['logstash'],
   }
 
+  # graylog pipeline
   file { "/etc/logstash/conf.d/graylog.conf":
     ensure => present,
     owner => "root",
@@ -119,6 +120,14 @@ class ss_logstash::install inherits ss_logstash {
     notify => Service['logstash'],
   }
 
-  # S3 pipeline output
-
+  # S3 pipeline
+  file { "/etc/logstash/conf.d/s3.conf":
+    ensure  => present,
+    owner   => "root",
+    group   => "root",
+    mode    => "0644",
+    content => template("ss_logstash/s3.erb"),
+    require => File['/etc/logstash/conf.d/'],
+    notify  => Service['logstash'],
+  }
 }

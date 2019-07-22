@@ -16,5 +16,5 @@ input {
 }
 
 output {
-	pipeline { send_to => [graylog] }
+	pipeline { send_to => [graylog, S3] }
 }
