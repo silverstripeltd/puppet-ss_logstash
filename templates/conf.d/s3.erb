@@ -1,0 +1,38 @@
+input {
+	pipeline { address => S3 }
+}
+
+filter {
+
+	# we need to parse out the real host (otherwise the NLB hostname) and the real datetime (otherwise the receive timestamp) from the syslog entry
+	grok {
+		# don't make new fields for unnamed captures
+		named_captures_only => true
+		overwrite => [ "host", "message" ]
+		match => { 'message' => '(%{SYSLOGTIMESTAMP:syslog_timestamp}|%{TIMESTAMP_ISO8601:syslog_timestamp}) %{SYSLOGHOST:host} %{GREEDYDATA:message}' }
+	}
+
+	# parse the syslog timestamp and replace it in the output
+	date {
+		match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss", "ISO8601" ]
+	}
+}
+
+output {
+	<% if @s3_bucket_name %>
+	s3{
+		region => "<%= @s3_bucket_region %>"
+		bucket => "<%= @s3_bucket_name %>"
+		encoding => "gzip"
+		server_side_encryption => true
+		time_file => <%= @s3_time_file %>
+  		size_file => <%= @s3_size_file %>
+		codec => "line"
+		canned_acl => "private"
+		rotation_strategy => "time"
+		prefix => "%{+YYYY}/%{+MM}/%{+dd}"
+	}
+  <% else  %>
+  # S3bucket output is not enabled due to empty bucket name
+  <% end %>
+}
