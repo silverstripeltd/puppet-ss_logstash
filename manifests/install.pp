@@ -49,6 +49,15 @@ class ss_logstash::install inherits ss_logstash {
     notify  => Service['logstash'],
   }
 
+  file { '/etc/logstash/log4j2.properties':
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => template('ss_logstash/log4j2.properties.erb'),
+    notify  => Service['logstash'],
+  }
+
   exec { 'install_lumberjack':
     command => '/usr/share/logstash/bin/logstash-plugin install logstash-input-lumberjack',
     timeout => 1800,
