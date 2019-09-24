@@ -30,7 +30,7 @@ output {
 		codec => "line"
 		canned_acl => "private"
 		rotation_strategy => "time"
-		prefix => "%{+YYYY}/%{+MM}/%{+dd}"
+		prefix => "year=%{+YYYY}/month=%{+MM}/day=%{+dd}"
 	}
   <% else  %>
   # S3bucket output is not enabled due to empty bucket name
