@@ -87,9 +87,11 @@ filter {
 }
 
 output {
-  gelf {
-	  host => '<%= @graylog_server %>'
-	  port => '<%= @port %>'
-	  protocol => 'TCP'
-  }
+<% @graylog_server.split(',').each() do | host | -%>
+    gelf {
+        host => '<%= host %>'
+        port => '<%= @port %>'
+        protocol => 'TCP'
+    }
+<% end -%>
 }
