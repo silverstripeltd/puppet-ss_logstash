@@ -17,6 +17,11 @@ filter {
         drop { }
     }
 
+	# these log types aren't user friendly and handled by our SIEM
+    if [log_type] in ["audit", "osqueryd"] {
+        drop { }
+    }
+
     if [short_message] =~ "^proxy$" {
         drop{ }
     }
