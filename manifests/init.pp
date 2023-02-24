@@ -75,17 +75,6 @@ class ss_logstash (
     jvm_options => $jvm_options,
   }
 
-  file { "${logstash::config_dir}/log4j2.properties":
-    ensure  => present,
-    source => 'puppet:///modules/ss_logstash/log4j2.properties',
-    notify  => Service['logstash'],
-  }
-
-  logstash::plugin { 'logstash-input-lumberjack': }
-  logstash::plugin { 'logstash-input-beats': }
-
-  # Install custom plugins
-  create_resources('logstash::plugin', hiera('ss_logstash::plugins'))
-
+  contain ss_logstash::install
   contain ss_logstash::config
 }

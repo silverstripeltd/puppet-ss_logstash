@@ -20,8 +20,8 @@ filter {
 
 output {
 	s3{
-		<% @s3_options.each() do | k, v | -%>
+<% @s3_options.each() do | k, v | -%>
 		<%= k %> => '<%= v %>'
-		<% end %>
+<% end %>
 	}
 }

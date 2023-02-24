@@ -37,7 +37,8 @@ base_includes:
  - ss_logstash
 
 ss_logstash::graylog_outputs:
-	gelf:
+	graylog:
+		type: gelf
 		host: 'my.graylog.server'
 		port: 12201
 		protocol: 'TCP'
@@ -50,7 +51,8 @@ no outputs are configured so this will need to be done manually.
 
 ``` yaml
 ss_logstash::graylog_outputs:
-	gelf:
+	graylog:
+		type: gelf
 		host: 'my.graylog.server'
 		port: 12201
 		protocol: 'TCP'
@@ -64,6 +66,7 @@ See: [https://docs.aws.amazon.com/opensearch-service/latest/developerguide/manag
 ``` yaml
 ss_logstash::graylog_outputs:
 	opensearch:
+		type: opensearch
 		hosts: 'https://domain-endpoint:443'
 		user: 'my-username'
 		password: 'my-password'

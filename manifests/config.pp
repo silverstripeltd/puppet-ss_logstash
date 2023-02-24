@@ -13,23 +13,29 @@ class ss_logstash::config {
   }
 
   $graylog_outputs = $ss_logstash::graylog_outputs
-  $s3_options = merge($default_s3_options, $ss_logstash::s3_options)
+  $s3_options = merge($default_s3_options, $ss_logstash::s3_output_options)
 
   # input pipeline
-  logstash::configfile { 'inputs':
-    content => template('ss_logstash/inputs.conf.erb'),
+  logstash::configfile { 'inputs.conf':
+    source => 'puppet:///modules/ss_logstash/inputs.conf',
   }
 
   # graylog pipeline
   if $graylog_outputs {
-    logstash::configfile { 'graylog':
+    $graylog_outputs.each | String $name, Hash $config | {
+      if !has_key($config, 'type') {
+        err("Graylog output '${name}' does not have required 'type' key defined.")
+      }
+    }
+
+    logstash::configfile { 'graylog.conf':
       content => template('ss_logstash/graylog.conf.erb'),
     }
   }
 
   # S3 pipeline
-  if $ss_logstash::s3_options {
-    logstash::configfile { 's3':
+  if $ss_logstash::s3_output_options and !empty($ss_logstash::s3_output_options) {
+    logstash::configfile { 's3.conf':
       content => template('ss_logstash/s3.conf.erb'),
     }
   }

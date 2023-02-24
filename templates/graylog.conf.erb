@@ -87,11 +87,12 @@ filter {
 }
 
 output {
-<% @graylog_outputs.each() do | output, config | -%>
-    <%= output %> {
-        <% @config.each() do | k, v | -%>
+<% @graylog_outputs.each() do | name, config | -%>
+    <%= config['type'] %> {
+<% config.delete('type') -%>
+<% config.each() do | k, v | -%>
         <%= k %> => '<%= v %>'
-        <% end -%>
+<% end -%>
     }
 <% end -%>
 }
