@@ -19,20 +19,9 @@ filter {
 }
 
 output {
-	<% if @s3_bucket_name %>
 	s3{
-		region => "<%= @s3_bucket_region %>"
-		bucket => "<%= @s3_bucket_name %>"
-		encoding => "gzip"
-		server_side_encryption => true
-		time_file => <%= @s3_time_file %>
-  		size_file => <%= @s3_size_file %>
-		codec => "line"
-		canned_acl => "private"
-		rotation_strategy => "time"
-		prefix => "year=%{+YYYY}/month=%{+MM}/day=%{+dd}"
+		<% @s3_options.each() do | k, v | -%>
+		<%= k %> => '<%= v %>'
+		<% end %>
 	}
-  <% else  %>
-  # S3bucket output is not enabled due to empty bucket name
-  <% end %>
 }

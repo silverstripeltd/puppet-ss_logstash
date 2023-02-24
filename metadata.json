@@ -1,6 +1,6 @@
 {
   "name": "silverstripe-ss_logstash",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "SilverStripe Ltd",
   "summary": "Installs logstash for use on AWS Graylog setup, uses TCP rather than UDP",
   "license": "BSD-3-Clause",
@@ -8,23 +8,37 @@
   "project_page": "https://github.com/silverstripeltd/puppet-ss_logstash",
   "issues_url": "https://github.com/silverstripeltd/puppet-ss_logstash/issues",
   "dependencies": [
+    { 
+      "name": "puppet-logstash",
+      "version_requirement": ">= 5.0.1 < 8.0.0"
+    }
   ],
-  "data_provider": null,
   "operatingsystem_support": [
     {
       "operatingsystem": "Debian",
       "operatingsystemrelease": [
-        "8"
+        "10",
+        "11"
       ]
     },
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "18.04"
+        "18.04",
+        "20.04",
+        "22.04"
       ]
     }
   ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": ">= 6.1.0 < 8.0.0"
+    }
+  ],
   "tags": [
-    "metrics"
+    "metrics",
+    "logs",
+    "logstash"
   ]
 }
