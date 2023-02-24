@@ -14,6 +14,9 @@
 # @param [Hash] s3_output_options
 #   A collection of s3 output options to be consumed in `s3.conf`.
 #
+# @param [String] config_dir
+#   Path containing the Logstash configuration.
+#
 #   See: https://www.elastic.co/guide/en/logstash/current/plugins-outputs-s3.html
 #
 # @example Install Logstash, ensure the service is running and enabled (no ouputs).
@@ -68,11 +71,28 @@ class ss_logstash (
   $jvm_options        = undef,
   $graylog_outputs    = undef,
   $s3_output_options  = undef,
+  $config_dir         = '/etc/logstash',
 ) {
+
   class { 'logstash':
-    manage_repo => false,
+    manage_repo     => false,
     startup_options => $startup_options,
-    jvm_options => $jvm_options,
+    jvm_options     => $jvm_options,
+    config_dir      => $config_dir,
+    pipelines       => [
+      {
+        "pipeline.id" => "inputs",
+        "path.config" =>  "${config_dir}/conf.d/inputs.conf",
+      },
+      {
+        "pipeline.id" => "graylog",
+        "path.config" =>  "${config_dir}/conf.d/graylog.conf",
+      },
+      {
+        "pipeline.id" => "s3",
+        "path.config" =>  "${config_dir}/conf.d/s3.conf",
+      }
+    ],
   }
 
   contain ss_logstash::install
